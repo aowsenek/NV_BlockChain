@@ -1,3 +1,4 @@
+import pdb, base64
 import json
 import time
 import random
@@ -6,18 +7,22 @@ import hashlib
 import mygeotab
 import calendar
 import contract_abi
-import Crypto.PublicKey.RSA as RSA
 from web3 import Web3, HTTPProvider
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA as rsa
+from Crypto.Signature import PKCS1_v1_5
 from SENSITIVE_DATA import *
 w3 = Web3(HTTPProvider('https://ropsten.infura.io/v3/5af6561b0144467d873a662587677aae'))
 contract = w3.eth.contract(address = Web3.toChecksumAddress(CONTRACT_ADDRESS), abi = contract_abi.abi)
 LinesOfData = 10
 class VehicleBlockchain():
-    def __init__(self, signature):
-        self.parentHash = signature
+    def __init__(self, pubkey, privkey):
+        self.parentHash = pubkey
+        self.privkey = PKCS1_v1_5.new(privkey)
         self.binDifficulty = bin(int("dab",16))
         self.strDifficulty = "dab"
         self.nonce = 0#random()*100
+        self.blocknum = 0
         self.blockChain = {}
         self.data = None
 
@@ -48,9 +53,20 @@ class VehicleBlockchain():
             block = [self.parentHash, data, self.nonce]
             hash = hashlib.sha256(';'.join(map(str,block)).encode('utf-8')).hexdigest()
             if(self.nonce%100000 == 0): print(self.nonce)
-        self.blockChain[hash] = block
+        epoch = int(calendar.timegm(time.gmtime()))
+        digest = SHA256.new()
+        digest.update(hash.encode('utf-8'))
+#        pdb.set_trace()
+
+        signature = str(base64.b64encode(self.privkey.sign(digest)),'utf-8')
+
+        self.blockChain[self.blocknum] = {'block':block,'hash':hash,'sig':signature,'time':epoch}
+        #print(publishData(hash,epoch,self.nonce))
+        with open("blockChain.json","w") as fileb:
+            json.dump(self.blockChain, fileb)
         self.parentHash = hash
-        print(publishData(hash,int(calendar.timegm(time.gmtime())),self.nonce))
+        self.blocknum += 1
+
         #print("A New Block Touches the Beacon:", block, "Hash:", hash)
 
     def startChain(self, numBlocks):
@@ -68,9 +84,11 @@ def getGeoTabData():
     api = mygeotab.API(username=GEOTAB_USERNAME, password=GEOTAB_PASSWORD, database='NV_Dan')
     api.authenticate()
 
-    data = api.getfeed()
+    data = api.get('Trip', resultsLimit=10)
     json_string = json.dumps(data, indent=4, sort_keys=True, default=str)
-    return json_string
+    writeFile = open("data_file.json", "w")
+    writeFile.write(json_string)
+    writeFile.close()
 
 def publishData(hash, epoch, nonce):
     num = w3.eth.getTransactionCount(WALLET_ADDRESS)
@@ -93,16 +111,34 @@ def publishData(hash, epoch, nonce):
         print("Transaction Failed; Timeout.")
         return False
     prcs_receipt = contract.events.NewBlock().processReceipt(txn_receipt)
-    print(prcs_receipt)
+    #print(prcs_receipt)
     return True
 
+def getRSAKeys(gen):
+    if(gen == "generate"):
+        privkey = rsa.generate(2048)
+        pubkey = privkey.publickey()
+        with open ("nv_keys", "w") as prv_file:
+            print("{}".format(privkey.exportKey(format='PEM')), file=prv_file)
+
+        with open ("nv_keys.pub", "w") as pub_file:
+            print("{}".format(pubkey.exportKey(format='PEM')), file=pub_file)
+            pubkey = str(pubkey.exportKey(format='PEM'),'utf-8')
+    else:
+        with open('nv_keys', mode = 'rb') as privatefile:
+            keydata = privatefile.read()
+        privkey = rsa.PrivateKey.load_pkcs1(keydata)
+        with open('nv_keys.pub', mode = 'rb') as privatefile:
+            keydata = privatefile.read()
+        pubkey = rsa.PrivateKey.load_pkcs1(keydata)
+    return pubkey,privkey
+
 def eventLoop():
-    pubkey = open("nv_keys.pub").read()
-    blockchain = VehicleBlockchain(pubkey)
+    pubkey,privkey = getRSAKeys("generate")
+    blockchain = VehicleBlockchain(pubkey,privkey)
     blockchain.startChain(5)
-    mockdata = open("MOCK_DATA.json","r")
-    api = mygeotab.API(username=GEOTAB_USERNAME, password=GEOTAB_PASSWORD, database='NV_Dan')
-    api.authenticate()
+    getGeoTabData()
+    mockdata = open("data_file.json","r")
     
     for i in range(5):#while(True):
         data = []
