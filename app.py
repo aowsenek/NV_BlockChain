@@ -15,7 +15,7 @@ def index():
         data = json.loads(f.read())
 
     data_array = map(lambda x: [
-        (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(x[1]["time"])), "Unix epoch time: " + x[1]["time"]),
+        (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(x[1]["time"])), "Unix epoch time: " + str(x[1]["time"])),
         (x[1]["hash"], "Hash"),
         ("%s ... %s" % (x[1]["sig"][:5], x[1]["sig"][-5:]), x[1]["sig"])
     ], sorted(data.items(), key=lambda x: x[0]))
