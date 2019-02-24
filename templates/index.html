@@ -1,0 +1,42 @@
+<html>
+    <head>
+        <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script> -->
+        <!-- <link rel="stylesheet" href="//cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"> -->
+        <link rel="stylesheet" href="../static/css/main.css">
+        <script>
+            $(document).ready( function () {
+                $('#myTable').DataTable({
+                    paging: false,
+                    ordering:  false,
+                    searching: false,
+                });
+            } );
+        </script>
+    </head>
+    <body>
+        <div class="main">
+            <h1 class="tac">CAN Theft Auto: Blockchain</h1>
+            <table id="myTable" class="compact hover">
+                <thead>
+                    {% for label in labels %}
+                    <th>
+                        {{ label }}
+                    </th>
+                    {% endfor %}
+                </thead>
+                <tbody>
+                    {% for row in data %}
+                    <tr>
+                        {% for col in row %}
+                        <td>
+                            <span title="{{ col[1] }}">{{ col[0] }}</span>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </body>
+</html>
