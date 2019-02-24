@@ -1,13 +1,17 @@
 import json
+import time
 import random
 import pprint
 import hashlib
 import mygeotab
+import calendar
+import contract_abi
 import Crypto.PublicKey.RSA as RSA
 from web3 import Web3, HTTPProvider
 from SENSITIVE_DATA import *
-W3 = Web3(HTTPProvider('mainnet.infura.io/v3/5af6561b0144467d873a662587677aae'))
-
+w3 = Web3(HTTPProvider('https://ropsten.infura.io/v3/5af6561b0144467d873a662587677aae'))
+contract = w3.eth.contract(address = Web3.toChecksumAddress(CONTRACT_ADDRESS), abi = contract_abi.abi)
+LinesOfData = 10
 class VehicleBlockchain():
     def __init__(self, signature):
         self.parentHash = signature
@@ -46,6 +50,7 @@ class VehicleBlockchain():
             if(self.nonce%100000 == 0): print(self.nonce)
         self.blockChain[hash] = block
         self.parentHash = hash
+        print(publishData(hash,int(calendar.timegm(time.gmtime())),self.nonce))
         #print("A New Block Touches the Beacon:", block, "Hash:", hash)
 
     def startChain(self, numBlocks):
@@ -67,7 +72,29 @@ def getGeoTabData():
     json_string = json.dumps(data, indent=4, sort_keys=True, default=str)
     return json_string
 
+def publishData(hash, epoch, nonce):
+    num = w3.eth.getTransactionCount(WALLET_ADDRESS)
+    txn_dict = contract.functions.addHash(hash,epoch,nonce).buildTransaction({
+        'chainId': 3,
+        'gas': 1400000,
+        'gasPrice': w3.toWei('1', 'gwei'),
+        'nonce': num,
+    })
+    signed_txn = w3.eth.account.signTransaction(txn_dict, private_key=WALLET_PRIVATE_KEY)
+    result = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
+    txn_receipt = w3.eth.getTransactionReceipt(result)
 
+    count = 0
+    while(txn_receipt is None and (count < 30)):
+        time.sleep(10)
+        txn_receipt = w3.eth.getTransactionReceipt(result)
+        print(txn_receipt)
+    if(txn_receipt is None): 
+        print("Transaction Failed; Timeout.")
+        return False
+    prcs_receipt = contract.events.NewBlock().processReceipt(txn_receipt)
+    print(prcs_receipt)
+    return True
 
 def eventLoop():
     pubkey = open("nv_keys.pub").read()
@@ -78,11 +105,10 @@ def eventLoop():
     api.authenticate()
     
     for i in range(5):#while(True):
-        #data = api.getFeed()#("LogRecord", results = 10)
-        data = mockdata.readline()
-        print(data)
-        json_string = json.dumps(data, indent=4, sort_keys=True, default=str)
-        blockchain.MakeBlock(json_string)
+        data = []
+        for i in range(LinesOfData):
+            data.append(mockdata.readline())
+        blockchain.MakeBlock(data)
         blockchain.printLastBlock()
     
 
