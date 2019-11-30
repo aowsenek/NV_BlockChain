@@ -1,0 +1,14 @@
+\chapter{Attacks}
+There are three main attacks that the proposed software defends against. 
+        \section{Attack 1: Retroactive Data Deletion}
+        In this attack, the adversary modifies or deletes the data after it has been logged, sent to the server, and recorded in the blockchain. Our software protects against this because such an action (such as deleting the logs) would invalidate the authentication for all following blocks, and using the invalid authentication, we can detect where the data was modified.
+        
+        An example scenario where this attack may be perpetrated: \newline A driver gets into an accident where they are at-fault. They inform their boss of the incident, after the block with incriminating data has been built upon. The boss wants to protect the company from lawsuit, so the boss deletes the block of data recording the accident.
+        \section{Attack 2: Proactive Data Deletion}
+        In this attack, the adversary modifies or deletes the log data before blocks have been built on top of it. This attack is mitigated by hashing blocks on top of the relevant data in short intervals, or, if this is infeasible, by detecting suspicious breaks in data reporting that proactive data deletion would leave behind.
+        
+        An example scenario where this attack may be perpetrated: \newline A driver gets into an accident where they are at-fault. They call their boss immediately, informing them of the incident. The boss wants to protect the company from lawsuit, so the boss deletes the block of data recording the accident before another block can be created on top of it.
+        \section{Attack 3: Modification of Data}
+        The third attack we defend against is the modification of data. If an attacker modifies the data in the middle of a chain, and realizes that the modification would be detected through the invalid hashes of the following blocks, they could try to re-hash the entire chain starting from the nearest anchor block onward. This, however, would be resource-intensive. In order to hash an entire new chain and then substitute it for the genuine chain they would need to generate blocks at a faster rate than the new chain. This is infeasible without significant computational power.
+        
+         An example scenario where this attack may be perpetrated: \newline A driver gets into an accident where they are at-fault. They inform their boss of the incident, after the block with incriminating data has been built upon. The boss wants to protect the company from lawsuit, so the boss deletes the block of data recording the accident, and re-hashes the entire chain of data all the way back to the most recent Anchor block.

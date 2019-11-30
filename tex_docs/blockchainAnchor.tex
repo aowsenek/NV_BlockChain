@@ -1,0 +1,26 @@
+\documentclass[border=5mm]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{chains, arrows, shapes.geometric}
+\renewcommand*{\familydefault}{\sfdefault}
+\begin{document}
+%\begin{figure}
+
+\tikzstyle{block} = [regular polygon,regular polygon sides=4, minimum width=6em, width = 6em, draw]
+\begin{tikzpicture}
+
+\node[block] (A) at (0, 0) {Root};
+\node (B) at (1, 0) {Data};
+\node (C) at (2, 0) {Anchor};
+\node (D) at (3, 0) {Data};
+
+
+        \draw (0,0) rectangle (1.25,1.25) node[pos=.5] {Root};
+        \draw (2,0) rectangle (3.25,1.25) node[pos=.5] {Data};
+        \draw (4,0) rectangle (5.25,1.25) node[pos=.5] {Data};
+        \draw (6,0) rectangle (7.25,1.25) node[pos=.5] {Anchor};
+        \draw (8,0) rectangle (9.25,1.25) node[pos=.5] {Data};
+        \draw (10,0) rectangle (11.25,1.25) node[pos=.5] {Data};
+
+\end{tikzpicture}
+%\end{figure}
+\end{document}

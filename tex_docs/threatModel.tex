@@ -1,0 +1,19 @@
+%\chapter{Threat Model}
+\label{threats}
+\section{Threat Model}
+It is essential to understand the potential attack vectors on the logs and what attack vectors our logging software will protect against.
+
+        In this threat model, 
+        \begin{outline}
+            \1   The adversary controls the server
+            \1   The adversary controls the server time
+                \2  The data cannot have a reliable timestamp.
+            \1   The adversary can choose to send some, none, or a modified version of the data.
+                \2         We make no assumptions about the correctness of the data that is sent to the server and entered into the block chain.
+            \1   The adversary can send anything to the ally or the blockchain.
+                
+            \1 The adversary has access to any private keys associated with the blockchain or server.
+            \1 The adversary can have an infinite number of false replicas of the ally.
+        \end{outline}
+
+        The sole goal of the software is to let the ally in our scenario detect if data from the blockchain is not in the correct sequence or if it has been modified or omitted after being entered into the blockchain. 
